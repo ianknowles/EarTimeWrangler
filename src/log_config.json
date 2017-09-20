@@ -1,0 +1,27 @@
+{
+	"version": 1,
+	"formatters": {
+		"meeting_parser": {
+			"format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+		}
+	},
+	"handlers": {
+		"console": {
+			"class": "logging.StreamHandler",
+			"level": "DEBUG",
+			"formatter": "meeting_parser"
+		},
+		"file": {
+			"class": "logging.FileHandler",
+			"level": "DEBUG",
+			"formatter": "meeting_parser",
+			"filename": "%.log"
+		}
+	},
+	"loggers": {
+		"meeting_parser": {
+			"level": "DEBUG",
+			"handlers": ["console", "file"]
+		}
+	}
+}
