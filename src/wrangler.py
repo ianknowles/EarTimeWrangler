@@ -14,9 +14,10 @@ import PDF.table_transformer
 root_logger = logging.getLogger('meeting_parser')
 logger = logging.getLogger('meeting_parser').getChild(__name__)
 
-path = os.path.dirname(os.path.realpath(__file__))
+file_path = os.path.dirname(os.path.realpath(__file__))
+path = os.path.join(file_path, '..')
 log_path = os.path.join(path, 'log')
-logging_config_filename = os.path.join(path, 'log_config.json')
+logging_config_filename = os.path.join(file_path, 'log_config.json')
 meet_count = 0
 root = tkinter.Tk()
 w = tkinter.Canvas(root, width=1024, height=768)
@@ -367,7 +368,7 @@ def ago_task():
 
 
 def test_task():
-	db_pathname = 'test_2017-09-19.sqlite'
+	db_pathname = 'test.sqlite'
 
 	create_meeting_table(db_pathname)
 	create_source_table(db_pathname)
@@ -386,8 +387,9 @@ def test_task():
 
 
 def data_task():
-	date = '2017-09-19'
-	db_pathname = 'meet_' + date + '.sqlite'
+	date = '2017-09-20'
+	db_filename = 'meet_' + date + '.sqlite'
+	db_pathname = os.path.join(path, 'output', db_filename)
 
 	create_meeting_table(db_pathname)
 	create_source_table(db_pathname)

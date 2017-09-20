@@ -4,8 +4,10 @@ import csv
 
 if __name__ == '__main__':
 	BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-	date = '2017-09-19'
-	db_path = os.path.normpath(os.path.join(BASE_DIR, '..', 'meet_' + date + '.sqlite'))
+	output_path = os.path.normpath(os.path.join(BASE_DIR, '..', '..', 'output'))
+	date = '2017-09-20'
+	db_filename = 'meet_' + date + '.sqlite'
+	db_path = os.path.join(output_path, db_filename)
 
 	conn = sqlite3.connect(db_path)
 	c = conn.cursor()
@@ -13,7 +15,10 @@ if __name__ == '__main__':
 
 	discards = 0
 	meetings = 0
-	with open('source-report' + date + '.csv', 'w', newline='') as csvfile:
+	#TODO make sure UTF-8 encoded
+	source_filename = 'source-report' + date + '.csv'
+	source_pathname = os.path.join(output_path, source_filename)
+	with open(source_pathname, 'w', newline='') as csvfile:
 		w = csv.writer(csvfile)
 		headers = []
 		for row in c.execute('SELECT * FROM source'):
@@ -28,7 +33,9 @@ if __name__ == '__main__':
 			w.writerow(r)
 	print("total discard:" + str(discards) + ", total meet:" + str(meetings) + ", rough estimate:" + str(meetings/(meetings + discards) * 100) + "%")
 
-	with open('meetings-export' + date + '.csv', 'w', newline='') as file:
+	export_filename = 'meetings-export' + date + '.csv'
+	export_pathname = os.path.join(output_path, export_filename)
+	with open(export_pathname, 'w', newline='') as file:
 		wr = csv.writer(file)
 		headers = []
 		for row in c.execute('SELECT * FROM meeting'):
