@@ -288,16 +288,10 @@ def page_to_tables(page_layout):
 	table_rects = []
 	remaining_rects = list(rects_by_x)
 	groups = []
-	remaining = len(remaining_rects)
+
 	while remaining_rects:
-		groups = compact(groups, remaining_rects)
-		remaining_rects = list(filter(lambda x: len(x) == 1, groups))
-		remaining_rects = flatten(remaining_rects)
-		groups = list(filter(lambda x: len(x) != 1, groups))
-		if len(remaining_rects) != remaining:
-			remaining = len(remaining_rects)
-		else:
-			break
+		groups.append(PDF.rectangles.RectangleGroup(remaining_rects.pop()))
+		groups[-1].add_intersecting_rects(remaining_rects)
 
 	# try filter(remaining_rects, intersects) ? keep filtering until len(0) result
 
@@ -315,29 +309,19 @@ def page_to_tables(page_layout):
 
 	tables = []
 	for group in groups:
-		xmin = group[0].x0
-		xmax = group[0].x1
-		ymin = group[0].y0
-		ymax = group[0].y1
-		for rect in group:
-			xmin = min(rect.x0, xmin)
-			xmax = max(rect.x1, xmax)
-			ymin = min(rect.y0, ymin)
-			ymax = max(rect.y1, ymax)
-		bbox = pdfminer.layout.LTRect(1, (xmin, ymin, xmax, ymax))
-		table_chars = list(filter(lambda x: PDF.rectangles.intersects(x, bbox), characters))
+		table_chars = list(filter(lambda x: PDF.rectangles.intersects(x, group.bbox), characters))
 		#TODO page by page view
 		#chars.append(table_chars)
-		tables.append([bbox, group, table_chars])
+		tables.append([group, table_chars])
 	tables.reverse()
 
 	return list(filter(lambda x: len(x['cells']) > 0, [process_table(table) for table in tables]))
 
 def process_table(table):
 	import matplotlib.pyplot as plt
-	bbox = table[0]
-	rects = table[1]
-	tchars = table[2]
+	bbox = table[0].bbox
+	rects = table[0].rects
+	tchars = table[1]
 	bottom_line = pdfminer.layout.LTRect(1, (bbox.x0, bbox.y1, bbox.x1, bbox.y1))
 	top_line = pdfminer.layout.LTRect(1, (bbox.x0, bbox.y0, bbox.x1, bbox.y0))
 	left_line = pdfminer.layout.LTRect(1, (bbox.x0, bbox.y0, bbox.x0, bbox.y1))

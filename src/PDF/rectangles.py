@@ -21,8 +21,41 @@ def intersects(r1, r2):
 	v_intersects = line_intersects((r1.y0 - 1, r1.y1 + 1), (r2.y0 - 1, r2.y1 + 1))
 	return h_intersects and v_intersects
 
+
 def contains(r1, r2):
 	return (r2.x0 >= r1.x0) and (r2.x1 <= r1.x1) and (r2.y0 >= r1.y0) and (r2.y1 <= r1.y1)
+
+import pdfminer.layout
+class RectangleGroup:
+	rects = []
+	bbox = pdfminer.layout.LTRect(1, (0, 0, 0, 0))
+
+	def __init__(self, r):
+		self.bbox = r
+		self.rects.append(r)
+
+
+	def intersects(self, r):
+		return intersects(self.bbox, r)
+
+	def add_rect(self, r):
+		xmin = min(r.x0, self.bbox.x0)
+		xmax = max(r.x1, self.bbox.x1)
+		ymin = min(r.y0, self.bbox.y0)
+		ymax = max(r.y1, self.bbox.y1)
+		self.bbox = pdfminer.layout.LTRect(1, (xmin, ymin, xmax, ymax))
+		self.rects.append(r)
+
+	def add_intersecting_rects(self, rects):
+		match = True
+		while match:
+			match = False
+			for r in rects:
+				if self.intersects(r):
+					self.add_rect(r)
+					rects.remove(r)
+					match = True
+
 
 
 if __name__ == '__main__':
