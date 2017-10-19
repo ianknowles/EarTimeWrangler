@@ -204,6 +204,18 @@ def find_header_match(keys, candidates):
 			return key
 	return None
 
+import table
+
+
+def csv_identify(db_pathname, csv_pathname, header, rows):
+	t = table.Table('', header)
+	discards = 0
+	if t.tabletype == 'Unknown':
+		logger.error('Aborted csv parse because of unrecognised header: ' + str(header))
+		discards = rows
+
+	add_file_to_db(db_pathname, csv_pathname, discards)
+
 
 def process_csv(db_pathname, csv_pathname):
 	logger.info('Starting to process csv ' + csv_pathname)
@@ -220,9 +232,32 @@ def process_csv(db_pathname, csv_pathname):
 			return 0
 
 		fieldnames = None
-		#if not csv.Sniffer().has_header(sample):
+		header_detected = csv.Sniffer().has_header(sample)
+		skips = 0
+		seek_dist = 0
+		while not header_detected and (skips < 10):
+			skips += 1
+			try:
+				header_detected = csv.Sniffer().has_header(sample.split('\n', maxsplit=skips)[-1])
+			except csv.Error:
+				logger.debug('csv parse issue')
+				header_detected = False
+				break
+		if header_detected:
+			logger.info('found a header ' + sample.split('\n', maxsplit=skips)[-1])
 		#	logger.warning('CSV file missing header row, might be a format issue')
 		#	fieldnames = ['Date of meeting', 'Minister', 'Name of organisation', 'Purpose of meeting']
+		csvfile.seek(0)
+		#skipped = 0
+		##for line in csvfile:
+		#	skipped += 1
+		#	seek_dist += len(line)
+		#	if skipped == skips:
+		#		break
+		#csvfile.seek(seek_dist)
+		if header_detected:
+			for i in range(skips):
+				next(csvfile)
 		reader = csv.DictReader(csvfile, fieldnames, dialect)
 		db_rows = []
 		reader.fieldnames = list(map(lambda s: s.strip().lower(), reader.fieldnames))
@@ -233,39 +268,34 @@ def process_csv(db_pathname, csv_pathname):
 		# complete generic method taking the csv_keys and the list of candidate lists
 		rep_keys = ['Minister', 'prime minister']
 		keymap['rep'] = find_header_match(csv_keys, rep_keys)
-		if keymap['rep'] is None:
-			logger.error('Aborted csv parse because of unrecognised header: ' + str(csv_keys))
-			for row in reader:
-				discards += 1
-
-			add_file_to_db(db_pathname, csv_pathname, discards)
-			return 0
+		#if keymap['rep'] is None:
+		#	for row in reader:
+		#		discards += 1
+		#	csv_identify(db_pathname, csv_pathname, reader.fieldnames, discards)
+		#	return 0
 
 		date_keys = ['Date of meeting', 'Date']
 		keymap['date'] = find_header_match(csv_keys, date_keys)
 		if keymap['date'] is None:
-			logger.error('Aborted csv parse because of unrecognised header: ' + str(csv_keys))
 			for row in reader:
 				discards += 1
-			add_file_to_db(db_pathname, csv_pathname, discards)
+			csv_identify(db_pathname, csv_pathname, reader.fieldnames, discards)
 			return 0
 
 		org_keys = ['Name of organisation', 'Organisation', 'Name of External Organisation', 'Name of External Organisation*', 'Name of organisation or individual']
 		keymap['org'] = find_header_match(csv_keys, org_keys)
 		if keymap['org'] is None:
-			logger.error('Aborted csv parse because of unrecognised header: ' + str(csv_keys))
 			for row in reader:
 				discards += 1
-			add_file_to_db(db_pathname, csv_pathname, discards)
+			csv_identify(db_pathname, csv_pathname, reader.fieldnames, discards)
 			return 0
 
 		meet_keys = ['Purpose of meeting', 'purpose of meeting²', 'purpose of meeting_']
 		keymap['meet'] = find_header_match(csv_keys, meet_keys)
 		if keymap['meet'] is None:
-			logger.error('Aborted csv parse because of unrecognised header: ' + str(csv_keys))
 			for row in reader:
 				discards += 1
-			add_file_to_db(db_pathname, csv_pathname, discards)
+			csv_identify(db_pathname, csv_pathname, reader.fieldnames, discards)
 			return 0
 
 		#keymap['org'] = difflib.get_close_matches('organisation', csv_keys, n=1, cutoff=0.6)[0]
@@ -278,7 +308,7 @@ def process_csv(db_pathname, csv_pathname):
 		rep = 'Unknown'
 		for row in reader:
 			#if all(map(lambda x: row[x] is None or row[x] == '', keymap.values())):
-			if row[keymap['rep']] == '':
+			if keymap['rep'] is None or row[keymap['rep']] == '':
 				row[keymap['rep']] = rep
 			else:
 				rep = row[keymap['rep']]
@@ -394,6 +424,9 @@ def test_task():
 
 	#total += process_path2(db_pathname, data_path, 0)
 	total += process_pdf(db_pathname, os.path.join(data_path, 'ago', '2015_0103.pdf'))
+	total += process_csv(db_pathname, os.path.join(data_path, 'ago', '2010_0507.csv'))
+	total += process_csv(db_pathname, os.path.join(data_path, 'ago', '2011_1012.csv'))
+	total += process_csv(db_pathname, os.path.join(data_path, 'wo', '2010-wo-Q2 (may-july) (1) USoS.csv'))
 
 	logger.info(str(total) + ' total meetings committed')
 	#root.mainloop()
