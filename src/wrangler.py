@@ -149,8 +149,15 @@ def add_file_to_db(db_pathname, pathname, discards):
 	logger.info('Added a ' + file_type + ' to the db. ' + basename + ' ' + str(file_size) + ' bytes sha256: ' + file_hash)
 	return insert_source_file(db_pathname, (date, basename, file_type, file_size, file_hash, discards))
 
-
+files = []
 def process_file(db_pathname, pathname):
+	with open(pathname, 'rb') as file:
+		file_hash = hashlib.sha256(file.read()).hexdigest()
+	if file_hash in files:
+		logger.info('Duplicate file skipped ' + pathname)
+		return 0
+	else:
+		files.append(file_hash)
 	filename, file_type = os.path.splitext(os.path.basename(pathname))
 	if file_type == '.csv':
 		return process_csv(db_pathname, pathname)
