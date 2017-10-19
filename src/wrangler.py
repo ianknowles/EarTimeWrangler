@@ -19,8 +19,8 @@ path = os.path.join(file_path, '..')
 log_path = os.path.join(path, 'log')
 logging_config_filename = os.path.join(file_path, 'log_config.json')
 meet_count = 0
-root = tkinter.Tk()
-w = tkinter.Canvas(root, width=1024, height=768)
+#root = tkinter.Tk()
+#w = tkinter.Canvas(root, width=1024, height=768)
 
 def logging_setup():
 	# This should not be neccessary but pdfminer3k does not log properly
@@ -186,6 +186,7 @@ def process_path2(db_pathname, path, count):
 
 
 def find_header_match(keys, candidates):
+	#todo need to strip lower both
 	for key in candidates:
 		key = key.strip().lower()
 		try:
@@ -292,13 +293,13 @@ def process_csv(db_pathname, csv_pathname):
 
 def draw_rect(r, colour):
 	x0, y0, x1, y1 = r.bbox
-	w.create_rectangle(x0,  768 - y0, x1,  768 - y1, outline=colour)
+	#w.create_rectangle(x0,  768 - y0, x1,  768 - y1, outline=colour)
 
 def draw_char(c, colour):
 	arial = tkinter.font.Font(family='Arial',
 	                     size=int(c.size) - 1, weight='bold')
-	canvas_id = w.create_text(c.x0, 768 - c.y1, anchor="nw", fill=colour, font=arial)
-	w.itemconfig(canvas_id, text=c._text)
+	#canvas_id = w.create_text(c.x0, 768 - c.y1, anchor="nw", fill=colour, font=arial)
+	#w.itemconfig(canvas_id, text=c._text)
 
 def draw_rect_groups(g):
 	colours = ["red", "green", "blue", "yellow", "orange", "purple", "pink", "brown", "black"]
@@ -327,29 +328,31 @@ def process_pdf(db_pathname, pdf_pathname):
 	#stitched_tables = PDF.table_parser.stitch_together_tables(tables)
 
 	tables = PDF.table_transformer.extract_table(pdf_pathname)
-	rects = PDF.table_transformer.get_rects()
-	chars = PDF.table_transformer.get_chars()
-	draw_char_groups(chars)
-	draw_rect_groups(rects)
+	#tables[0].identify()
+
+	#rects = PDF.table_transformer.get_rects()
+	#chars = PDF.table_transformer.get_chars()
+	#draw_char_groups(chars)
+	#draw_rect_groups(rects)
 	#for r in rects[0][1]:
 	#	draw_rect(r, "red")
 
 	dept = os.path.basename(os.path.dirname(pdf_pathname))
 
-	meetings = list(filter(lambda x: x['tabletype'] == 'meeting' and len(x['rows']) > 0, tables))
-	not_meetings = list(filter(lambda x: x['tabletype'] != 'meeting' and len(x['rows']) > 0, tables))
+	meetings = list(filter(lambda x: x.tabletype == 'meeting' and len(x.rows) > 0, tables))
+	not_meetings = list(filter(lambda x: x.tabletype == 'unknown' and len(x.rows) > 0, tables))
 
 	discards = 0
 	for table in not_meetings:
-		discards += len(table['rows'])
+		discards += len(table.rows)
 	file_id = add_file_to_db(db_pathname, pdf_pathname, discards)
 	if len(meetings) == 0:
 		return 0
 
 	db_rows = []
 	for table in meetings:
-		for row in table['rows']:
-			db_rows.append([table['title']] + row + [dept] + [file_id])
+		for row in table.rows:
+			db_rows.append([table.title] + row + [dept] + [file_id])
 			print(db_rows)
 
 	return insert_table_rows(db_pathname, db_rows)
@@ -369,25 +372,28 @@ def ago_task():
 
 def test_task():
 	db_pathname = 'test.sqlite'
+	logging_setup()
+	total = 0
 
 	create_meeting_table(db_pathname)
 	create_source_table(db_pathname)
 
-	w.pack()
+	#w.pack()
 
-	data_path = os.path.join(path, 'Ministerial Meetings', 'test')
-	#process_file(db_pathname, os.path.join(data_path, 'bis', 'other', 'bis-ministerial-expenses-january-march-2015.pdf'))
+	data_path = os.path.join(path, 'data')
+	total += process_pdf(db_pathname, os.path.join(data_path, 'bis', 'bis-ministerial-expenses-january-march-2015.pdf'))
+	total += process_pdf(db_pathname, os.path.join(data_path, 'bis', 'bis-ministerial-expenses-july-september-2014.pdf'))
 	#process_file(db_pathname, os.path.join(data_path, 'moj', '2015q1.pdf'))
 
-	#total = process_path2(db_pathname, data_path, 0)
-	total = process_pdf(db_pathname, os.path.join(path, 'data2', 'ago', '2015_0103.pdf'))
+	#total += process_path2(db_pathname, data_path, 0)
+	total += process_pdf(db_pathname, os.path.join(data_path, 'ago', '2015_0103.pdf'))
 
 	logger.info(str(total) + ' total meetings committed')
-	root.mainloop()
+	#root.mainloop()
 
 
 def data_task():
-	date = '2017-09-20'
+	date = datetime.date.today().isoformat()
 	db_filename = 'meet_' + date + '.sqlite'
 	db_pathname = os.path.join(path, 'output', db_filename)
 

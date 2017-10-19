@@ -11,6 +11,7 @@ from pdfminer.pdfinterp import PDFTextExtractionNotAllowed
 from pdfminer.pdfparser import PDFParser, PDFDocument
 
 import PDF.rectangles
+import table
 
 logger = logging.getLogger('meeting_parser').getChild(__name__)
 
@@ -19,7 +20,7 @@ def extract_table(pdf_path):
 	layouts = get_page_layouts(pdf_path)
 	tables = [page_to_tables(page_layout) for page_layout in layouts]
 	stitched = new_stitch(tables)
-	return table_review(stitched)
+	return table_review2(stitched)
 
 def new_stitch(tables):
 	main_table = []
@@ -44,6 +45,12 @@ def new_stitch(tables):
 				main_table.append(table)
 	return main_table
 
+def table_review2(tables):
+	tabs = []
+	for tab in tables:
+		tabs.append(table.Table(tab['title'], tab['cells']))
+	return tabs
+
 def table_review(tables):
 	for table in tables:
 		# can we do this without copying the cells? pointer to first row is easy, pointer to the rest?
@@ -51,8 +58,8 @@ def table_review(tables):
 		table['header'] = cells.pop(0)
 		table['rows'] = cells
 		table['tabletype'] = 'unknown'
-		first = table['header'][0].lower()
-		print(first)
+		#first = table['header'][0].lower()
+		#print(first)
 		finds = table['header'][0].lower().find('date')
 
 		if table['header'][0].lower().find('date') >= 0 or (table['header'][0].lower() == 'date of meeting'):
@@ -109,11 +116,11 @@ def stitch_together_tables(tables):
 					    len(line) > 1 and
 					    len(list(filter(lambda s: s == '', line))) > 0 and
 					    len(main_table) > 0):
-				logger.info('Stitching rows:' + str(main_table[-1]) + str(line))
+				#logger.debug('Stitching rows:' + str(main_table[-1]) + str(line))
 				for i in range(min(len(main_table[-1]), len(line))):
 					main_table[-1][i] += ' '
 					main_table[-1][i] += line[i]
-				logger.info('Stitched result:' + str(main_table[-1]))
+				#logger.debug('Stitched result:' + str(main_table[-1]))
 			else:
 				main_table.append(line)
 
@@ -268,6 +275,7 @@ def page_to_tables(page_layout):
 	texts = []
 	rectangles = []
 	other = []
+	logger.debug("Starting page")
 
 	for e in page_layout:
 		if isinstance(e, pdfminer.layout.LTTextBoxHorizontal):
@@ -292,6 +300,7 @@ def page_to_tables(page_layout):
 	while remaining_rects:
 		groups.append(PDF.rectangles.RectangleGroup(remaining_rects.pop()))
 		groups[-1].add_intersecting_rects(remaining_rects)
+	logger.debug("Grouping done")
 
 	# try filter(remaining_rects, intersects) ? keep filtering until len(0) result
 
@@ -318,7 +327,7 @@ def page_to_tables(page_layout):
 	return list(filter(lambda x: len(x['cells']) > 0, [process_table(table) for table in tables]))
 
 def process_table(table):
-	import matplotlib.pyplot as plt
+	#import matplotlib.pyplot as plt
 	bbox = table[0].bbox
 	rects = table[0].rects
 	tchars = table[1]
@@ -360,53 +369,54 @@ def process_table(table):
 		logger.debug("Couldn't find any rows in this table, review")
 		return {"title": "", "cells": []}
 
-	cell0 = list(filter(lambda x: PDF.rectangles.contains(columns[0], x) and PDF.rectangles.contains(rows[0], x), tchars))
-	cell0 = sorted(cell0, key=lambda r: r.y0)
+	#cell0 = list(filter(lambda x: PDF.rectangles.contains(columns[0], x) and PDF.rectangles.contains(rows[0], x), tchars))
+	#cell0 = sorted(cell0, key=lambda r: r.y0)
 	title_row = ""
 
 	#i, j = 0
 	table_cells = []
-	for r in rows:
+	for row in rows:
 		title = False
+		rowend = False
 		table_row = []
-		for c in columns:
-			cell_r = pdfminer.layout.LTRect(1, (c.x0 - 2, r.y0 - 2, c.x1 + 2, r.y1 + 2))
-			cell_right = pdfminer.layout.LTRect(1, (c.x1 - 2, r.y0 - 2, c.x1 + 2, r.y1 + 2))
-			matches = list(filter(lambda x: PDF.rectangles.contains(cell_right, x), rects))
-			cell = list(filter(lambda x: PDF.rectangles.contains(c, x) and PDF.rectangles.contains(r, x), tchars))
-			cell = sorted(cell, key=lambda x: x.y0)
-			cell.reverse()
-			import itertools
-			strings = []
-			for k, g in itertools.groupby(cell, lambda x: x.y0):
-				strings.append(list(g))
-			string = ""
-			for s in strings:
-				t = sorted(s, key=lambda x: x.x0)
-				string += ''.join(list(map(lambda u: u.get_text(), t)))
-			if len(matches) == 0:
-				print("missing row end")
+		for col in columns:
+			cell_right = pdfminer.layout.LTRect(1, (col.x1 - 2, row.y0 - 2, col.x1 + 2, row.y1 + 2))
+			for rect in rects:
+				if PDF.rectangles.contains(cell_right, rect):
+					rowend = True
+					break
+			if not rowend:
 				title = True
+				cell_rect = pdfminer.layout.LTRect(1, (row.x0 - 2, row.y0 - 2, row.x1 + 2, row.y1 + 2))
+			else:
+				cell_rect = pdfminer.layout.LTRect(1, (col.x0 - 2, row.y0 - 2, col.x1 + 2, row.y1 + 2))
+			cell_chars = [char for char in tchars if PDF.rectangles.contains(cell_rect, char)]
+			tchars[:] = [char for char in tchars if not PDF.rectangles.contains(cell_rect, char)]
+			cell_chars = sorted(cell_chars, key=lambda x: x.y0)
+			cell_chars.reverse()
+			import itertools
+			string = ''
+			for k, g in itertools.groupby(cell_chars, lambda x: x.y0):
+				t = sorted(g, key=lambda x: x.x0)
+				string += ''.join(list(map(lambda u: u.get_text(), t)))
+
+			if title:
+				title_row = ''.join(string).strip()
 				break
 			else:
 				table_row.append(string.strip())
 
-		if title:
-			cell = list(filter(lambda x: PDF.rectangles.contains(r, x), tchars))
-			cell = sorted(cell, key=lambda x: x.x0)
-			string = list(map(lambda s: s.get_text(), cell))
-			title_row = ''.join(string).strip()
-		else:
+		if not title:
 			table_cells.append(table_row)
 
-	print(title_row)
-	for r in first_column:
-		plt.plot(*zip(*r.pts))
+	#print(title_row)
+	#for r in first_column:
+		#plt.plot(*zip(*r.pts))
 		#plt.show()
-		print()
+		#print()
 
 	#plt.show()
-	print()
+	#print()
 	return {"title": title_row, "cells": table_cells}
 
 
