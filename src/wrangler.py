@@ -244,7 +244,7 @@ def process_csv(db_pathname, csv_pathname):
 				header_detected = False
 				break
 		if header_detected:
-			logger.info('found a header ' + sample.split('\n', maxsplit=skips)[-1])
+			logger.info('found a header ' + sample.split('\n', maxsplit=skips + 1)[-2])
 		#	logger.warning('CSV file missing header row, might be a format issue')
 		#	fieldnames = ['Date of meeting', 'Minister', 'Name of organisation', 'Purpose of meeting']
 		csvfile.seek(0)
