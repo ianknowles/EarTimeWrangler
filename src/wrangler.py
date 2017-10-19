@@ -407,31 +407,6 @@ def ago_task():
 	logger.info(str(total) + ' total meetings committed')
 
 
-def test_task():
-	db_pathname = 'test.sqlite'
-	logging_setup()
-	total = 0
-
-	create_meeting_table(db_pathname)
-	create_source_table(db_pathname)
-
-	#w.pack()
-
-	data_path = os.path.join(path, 'data')
-	total += process_pdf(db_pathname, os.path.join(data_path, 'bis', 'bis-ministerial-expenses-january-march-2015.pdf'))
-	total += process_pdf(db_pathname, os.path.join(data_path, 'bis', 'bis-ministerial-expenses-july-september-2014.pdf'))
-	#process_file(db_pathname, os.path.join(data_path, 'moj', '2015q1.pdf'))
-
-	#total += process_path2(db_pathname, data_path, 0)
-	total += process_pdf(db_pathname, os.path.join(data_path, 'ago', '2015_0103.pdf'))
-	total += process_csv(db_pathname, os.path.join(data_path, 'ago', '2010_0507.csv'))
-	total += process_csv(db_pathname, os.path.join(data_path, 'ago', '2011_1012.csv'))
-	total += process_csv(db_pathname, os.path.join(data_path, 'wo', '2010-wo-Q2 (may-july) (1) USoS.csv'))
-
-	logger.info(str(total) + ' total meetings committed')
-	#root.mainloop()
-
-
 def data_task():
 	date = datetime.date.today().isoformat()
 	db_filename = 'meet_' + date + '.sqlite'
@@ -475,5 +450,4 @@ if __name__ == '__main__':
 	#root.after(2000, main_task)
 	#root.mainloop()
 	main_task()
-	#test_task()
 
