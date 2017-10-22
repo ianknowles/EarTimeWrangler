@@ -43,7 +43,7 @@ class Table:
 			self.tabletype = 'meeting'
 		elif date and org and meet:
 			self.tabletype = 'meeting'
-		elif find_header_match(keys, ['date', 'date gift given']) and find_header_match(keys, ['gift']):
+		elif find_header_match(keys, ['date', 'date gift given', 'Date received']) and find_header_match(keys, ['gift']):
 			self.tabletype = 'gift'
 		elif find_header_match(keys, ['destination']):
 			self.tabletype = 'travel'
