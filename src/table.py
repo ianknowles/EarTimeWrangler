@@ -10,6 +10,12 @@ def find_header_match(keys, candidates):
 	return None
 
 
+rep_keys = ['Minister', 'prime minister', 'Name of Minister', 'Permanent secretary']
+date_keys = ['Date of meeting', 'Date']
+meet_keys = ['Purpose of meeting', 'purpose of meeting²', 'purpose of meeting_']
+org_keys = ['Name of organisation', 'Organisation', 'Name of External Organisation', 'Name of External Organisation*', 'Name of organisation or individual', 'Person or organisation that meeting was with']
+
+
 class Table:
 	#title = ''
 	#header = []
@@ -25,17 +31,11 @@ class Table:
 
 	def identify(self):
 		keys = [h.strip().lower() for h in self.header]
+
 		# complete generic method taking the csv_keys and the list of candidate lists
-		rep_keys = ['Minister', 'prime minister', 'Name of Minister', 'Permanent secretary']
 		rep = find_header_match(keys, rep_keys)
-
-		date_keys = ['Date of meeting', 'Date']
 		date = find_header_match(keys, date_keys)
-
-		org_keys = ['Name of organisation', 'Organisation', 'Name of External Organisation', 'Name of External Organisation*', 'Name of organisation or individual', 'Person or organisation that meeting was with']
 		org = find_header_match(keys, org_keys)
-
-		meet_keys = ['Purpose of meeting', 'purpose of meeting²', 'purpose of meeting_']
 		meet = find_header_match(keys, meet_keys)
 
 		#TODO length checks removed, need to handle empty columns
