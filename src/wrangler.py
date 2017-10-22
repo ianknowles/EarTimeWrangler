@@ -9,6 +9,7 @@ import time
 import tkinter
 import tkinter.font
 
+import CSV.table_transform
 import PDF.table_transformer
 
 root_logger = logging.getLogger('meeting_parser')
@@ -160,7 +161,7 @@ def process_file(db_pathname, pathname):
 		files.append(file_hash)
 	filename, file_type = os.path.splitext(os.path.basename(pathname))
 	if file_type == '.csv':
-		return process_csv(db_pathname, pathname)
+		return CSV.table_transform.process(db_pathname, pathname)
 	elif file_type == '.pdf':
 		return process_pdf(db_pathname, pathname)
 	return 0
@@ -186,157 +187,23 @@ def process_path2(db_pathname, path, count):
 		for filename in filenames:
 			name, file_type = os.path.splitext(filename)
 			if file_type == '.csv':
-				total_count += process_csv(db_pathname, os.path.join(dirpath, filename))
+				total_count += CSV.table_transform.process(db_pathname, os.path.join(dirpath, filename))
 			elif file_type == '.pdf':
 				total_count += process_pdf(db_pathname, os.path.join(dirpath, filename))
 	return total_count
-
-
-def find_header_match(keys, candidates):
-	#todo need to strip lower both
-	for key in candidates:
-		key = key.strip().lower()
-		try:
-			keys.remove(key)
-		except ValueError:
-			continue
-		else:
-			return key
-	return None
-
-import table
-
-
-def csv_identify(db_pathname, csv_pathname, header, rows):
-	t = table.Table('', header)
-	discards = 0
-	if t.tabletype == 'Unknown':
-		logger.error('Aborted csv parse because of unrecognised header: ' + str(header))
-		discards = rows
-
-	add_file_to_db(db_pathname, csv_pathname, discards)
-
-
-def process_csv(db_pathname, csv_pathname):
-	logger.info('Starting to process csv ' + csv_pathname)
-	dept = os.path.basename(os.path.dirname(csv_pathname))
-	with open(csv_pathname) as csvfile:
-		discards = 0
-		sample = csvfile.read(1024)
-		csvfile.seek(0)
-		try:
-			dialect = csv.Sniffer().sniff(sample)
-		except csv.Error:
-			logger.error('Aborted csv parse because of unrecognised format: ' + csv_pathname)
-			add_file_to_db(db_pathname, csv_pathname, -1)
-			return 0
-
-		fieldnames = None
-		header_detected = csv.Sniffer().has_header(sample)
-		skips = 0
-		seek_dist = 0
-		while not header_detected and (skips < 10):
-			skips += 1
-			try:
-				header_detected = csv.Sniffer().has_header(sample.split('\n', maxsplit=skips)[-1])
-			except csv.Error:
-				logger.debug('csv parse issue')
-				header_detected = False
-				break
-		if header_detected:
-			logger.info('found a header ' + sample.split('\n', maxsplit=skips + 1)[-2])
-		#	logger.warning('CSV file missing header row, might be a format issue')
-		#	fieldnames = ['Date of meeting', 'Minister', 'Name of organisation', 'Purpose of meeting']
-		csvfile.seek(0)
-		#skipped = 0
-		##for line in csvfile:
-		#	skipped += 1
-		#	seek_dist += len(line)
-		#	if skipped == skips:
-		#		break
-		#csvfile.seek(seek_dist)
-		if header_detected:
-			for i in range(skips):
-				next(csvfile)
-		reader = csv.DictReader(csvfile, fieldnames, dialect)
-		db_rows = []
-		reader.fieldnames = list(map(lambda s: s.strip().lower(), reader.fieldnames))
-
-		csv_keys = reader.fieldnames.copy()
-		keymap = {}
-
-		# complete generic method taking the csv_keys and the list of candidate lists
-		rep_keys = ['Minister', 'prime minister']
-		keymap['rep'] = find_header_match(csv_keys, rep_keys)
-		#if keymap['rep'] is None:
-		#	for row in reader:
-		#		discards += 1
-		#	csv_identify(db_pathname, csv_pathname, reader.fieldnames, discards)
-		#	return 0
-
-		date_keys = ['Date of meeting', 'Date']
-		keymap['date'] = find_header_match(csv_keys, date_keys)
-		if keymap['date'] is None:
-			for row in reader:
-				discards += 1
-			csv_identify(db_pathname, csv_pathname, reader.fieldnames, discards)
-			return 0
-
-		org_keys = ['Name of organisation', 'Organisation', 'Name of External Organisation', 'Name of External Organisation*', 'Name of organisation or individual']
-		keymap['org'] = find_header_match(csv_keys, org_keys)
-		if keymap['org'] is None:
-			for row in reader:
-				discards += 1
-			csv_identify(db_pathname, csv_pathname, reader.fieldnames, discards)
-			return 0
-
-		meet_keys = ['Purpose of meeting', 'purpose of meeting²', 'purpose of meeting_']
-		keymap['meet'] = find_header_match(csv_keys, meet_keys)
-		if keymap['meet'] is None:
-			for row in reader:
-				discards += 1
-			csv_identify(db_pathname, csv_pathname, reader.fieldnames, discards)
-			return 0
-
-		#keymap['org'] = difflib.get_close_matches('organisation', csv_keys, n=1, cutoff=0.6)[0]
-		#csv_keys.remove(keymap['org'])
-		#keymap['date'] = difflib.get_close_matches('date', csv_keys, n=1, cutoff=0.3)[0]
-		#csv_keys.remove(keymap['date'])
-		#keymap['rep'] = difflib.get_close_matches('Minister', csv_keys, n=1, cutoff=0.6)[0]
-		#csv_keys.remove(keymap['rep'])
-		#keymap['meet'] = difflib.get_close_matches('Purpose', csv_keys, n=1, cutoff=0.6)[0]
-		rep = 'Unknown'
-		for row in reader:
-			#if all(map(lambda x: row[x] is None or row[x] == '', keymap.values())):
-			if keymap['rep'] is None or row[keymap['rep']] == '':
-				row[keymap['rep']] = rep
-			else:
-				rep = row[keymap['rep']]
-
-			if row[keymap['date']] is None or row[keymap['rep']] is None or row[keymap['org']] is None or row[keymap['meet']] is None:
-				logger.warning('Discarded partial csv row: ' + str(row))
-				discards += 1
-			elif row[keymap['date']] == '' or len(row[keymap['date']]) > 20:
-				logger.warning('Discarded partial csv row: ' + str(row))
-				discards += 1
-			else:
-				db_rows.append([row[keymap['rep']], row[keymap['date']], row[keymap['org']], row[keymap['meet']], dept])
-
-		file_id = add_file_to_db(db_pathname, csv_pathname, discards)
-		for row in db_rows:
-			row.append(file_id)
-		return insert_table_rows(db_pathname, db_rows)
 
 
 def draw_rect(r, colour):
 	x0, y0, x1, y1 = r.bbox
 	#w.create_rectangle(x0,  768 - y0, x1,  768 - y1, outline=colour)
 
+
 def draw_char(c, colour):
 	arial = tkinter.font.Font(family='Arial',
 	                     size=int(c.size) - 1, weight='bold')
 	#canvas_id = w.create_text(c.x0, 768 - c.y1, anchor="nw", fill=colour, font=arial)
 	#w.itemconfig(canvas_id, text=c._text)
+
 
 def draw_rect_groups(g):
 	colours = ["red", "green", "blue", "yellow", "orange", "purple", "pink", "brown", "black"]
@@ -347,6 +214,7 @@ def draw_rect_groups(g):
 		i += 1
 		if i >= len(colours):
 			i = 0
+
 
 def draw_char_groups(g):
 	colours = ["red", "green", "blue", "yellow", "orange", "purple", "pink", "brown", "black"]
