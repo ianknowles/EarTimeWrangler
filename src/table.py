@@ -26,19 +26,22 @@ class Table:
 	def identify(self):
 		keys = [h.strip().lower() for h in self.header]
 		# complete generic method taking the csv_keys and the list of candidate lists
-		rep_keys = ['Minister', 'prime minister']
+		rep_keys = ['Minister', 'prime minister', 'Name of Minister', 'Permanent secretary']
 		rep = find_header_match(keys, rep_keys)
 
 		date_keys = ['Date of meeting', 'Date']
 		date = find_header_match(keys, date_keys)
 
-		org_keys = ['Name of organisation', 'Organisation', 'Name of External Organisation', 'Name of External Organisation*', 'Name of organisation or individual']
+		org_keys = ['Name of organisation', 'Organisation', 'Name of External Organisation', 'Name of External Organisation*', 'Name of organisation or individual', 'Person or organisation that meeting was with']
 		org = find_header_match(keys, org_keys)
 
 		meet_keys = ['Purpose of meeting', 'purpose of meeting²', 'purpose of meeting_']
 		meet = find_header_match(keys, meet_keys)
 
-		if (len(self.header) == 3) and date and org and meet:
+		#TODO length checks removed, need to handle empty columns
+		if rep and date and org and meet:
+			self.tabletype = 'meeting'
+		elif date and org and meet:
 			self.tabletype = 'meeting'
 		elif find_header_match(keys, ['date', 'date gift given']) and find_header_match(keys, ['gift']):
 			self.tabletype = 'gift'
