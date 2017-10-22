@@ -22,7 +22,7 @@ def find_header_match(keys, candidates):
 
 
 def csv_identify(db_pathname, csv_pathname, header, rows):
-	t = table.Table('', header)
+	t = table.Table('', [header])
 	discards = 0
 	if t.tabletype == 'Unknown':
 		logger.error('Aborted csv parse because of unrecognised header: ' + str(header))
@@ -118,32 +118,28 @@ def process(db_pathname, csv_pathname):
 		keymap = {}
 
 		# complete generic method taking the csv_keys and the list of candidate lists
-		rep_keys = ['Minister', 'prime minister']
-		keymap['rep'] = find_header_match(csv_keys, rep_keys)
+		keymap['rep'] = find_header_match(csv_keys, table.rep_keys)
 		#if keymap['rep'] is None:
 		#	for row in reader:
 		#		discards += 1
 		#	csv_identify(db_pathname, csv_pathname, reader.fieldnames, discards)
 		#	return 0
 
-		date_keys = ['Date of meeting', 'Date']
-		keymap['date'] = find_header_match(csv_keys, date_keys)
+		keymap['date'] = find_header_match(csv_keys, table.date_keys)
 		if keymap['date'] is None:
 			for row in reader:
 				discards += 1
 			csv_identify(db_pathname, csv_pathname, reader.fieldnames, discards)
 			return 0
 
-		org_keys = ['Name of organisation', 'Organisation', 'Name of External Organisation', 'Name of External Organisation*', 'Name of organisation or individual']
-		keymap['org'] = find_header_match(csv_keys, org_keys)
+		keymap['org'] = find_header_match(csv_keys, table.org_keys)
 		if keymap['org'] is None:
 			for row in reader:
 				discards += 1
 			csv_identify(db_pathname, csv_pathname, reader.fieldnames, discards)
 			return 0
 
-		meet_keys = ['Purpose of meeting', 'purpose of meeting²', 'purpose of meeting_']
-		keymap['meet'] = find_header_match(csv_keys, meet_keys)
+		keymap['meet'] = find_header_match(csv_keys, table.meet_keys)
 		if keymap['meet'] is None:
 			for row in reader:
 				discards += 1
