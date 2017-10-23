@@ -13,7 +13,7 @@ def find_header_match(keys, candidates):
 rep_keys = ['Minister', 'prime minister', 'Name of Minister', 'Permanent secretary', 'Name']
 date_keys = ['Date of meeting', 'Date']
 meet_keys = ['Purpose of meeting', 'purpose of meeting²', 'purpose of meeting_']
-org_keys = ['Name of organisation', 'Organisation', 'Name of External Organisation', 'Name of External Organisation*', 'Name of organisation or individual', 'Person or organisation that meeting was with']
+org_keys = ['Name of organisation', 'Organisation', 'Name of External Organisation', 'Name of External Organisation*', '1Name of External Organisation', 'Name of organisation or individual', 'Person or organisation that meeting was with']
 
 
 class Table:
@@ -43,7 +43,7 @@ class Table:
 			self.tabletype = 'meeting'
 		elif date and org and meet:
 			self.tabletype = 'meeting'
-		elif find_header_match(keys, ['date', 'date gift given', 'Date received']) and find_header_match(keys, ['gift']):
+		elif find_header_match(keys, ['date', 'date gift given', 'Date received', 'Date gift received']) and find_header_match(keys, ['gift']):
 			self.tabletype = 'gift'
 		elif find_header_match(keys, ['destination']):
 			self.tabletype = 'travel'
