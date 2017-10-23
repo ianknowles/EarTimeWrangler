@@ -77,6 +77,7 @@ def create_source_table(db_pathname):
 	c.execute('''CREATE TABLE IF NOT EXISTS source (
 	sourceid  INTEGER PRIMARY KEY,
 	insert_time INTEGER,
+	dept TEXT,
 	filename TEXT,
 	filetype TEXT,
 	filesize INTEGER,
@@ -129,7 +130,7 @@ def insert_table_row(db_pathname, tuple):
 def insert_source_file(db_pathname, tuple):
 	conn = sqlite3.connect(db_pathname)
 	c = conn.cursor()
-	c.execute('INSERT INTO source VALUES (NULL,?,?,?,?,?,?)', tuple)
+	c.execute('INSERT INTO source VALUES (NULL,?,?,?,?,?,?,?)', tuple)
 	conn.commit()
 	conn.close()
 	return c.lastrowid
@@ -147,10 +148,14 @@ def add_file_to_db(db_pathname, pathname, discards):
 	with open(pathname, 'rb') as file:
 		file_hash = hashlib.sha256(file.read()).hexdigest()
 	# need to check if entry already exists before inserting
+	dept = os.path.basename(os.path.dirname(pathname))
 	logger.info('Added a ' + file_type + ' to the db. ' + basename + ' ' + str(file_size) + ' bytes sha256: ' + file_hash)
-	return insert_source_file(db_pathname, (date, basename, file_type, file_size, file_hash, discards))
+	return insert_source_file(db_pathname, (date, dept, basename, file_type, file_size, file_hash, discards))
+
 
 files = []
+
+
 def process_file(db_pathname, pathname):
 	with open(pathname, 'rb') as file:
 		file_hash = hashlib.sha256(file.read()).hexdigest()
