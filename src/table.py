@@ -10,7 +10,7 @@ def find_header_match(keys, candidates):
 	return None
 
 
-rep_keys = ['Minister', 'prime minister', 'Name of Minister', 'Permanent secretary']
+rep_keys = ['Minister', 'prime minister', 'Name of Minister', 'Permanent secretary', 'Name']
 date_keys = ['Date of meeting', 'Date']
 meet_keys = ['Purpose of meeting', 'purpose of meeting²', 'purpose of meeting_']
 org_keys = ['Name of organisation', 'Organisation', 'Name of External Organisation', 'Name of External Organisation*', 'Name of organisation or individual', 'Person or organisation that meeting was with']
