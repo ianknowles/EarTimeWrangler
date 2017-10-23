@@ -86,7 +86,126 @@ def find_header(csvfile):
 			next(csvfile)
 
 
+def next_header(csvfile):
+	skips = 0
+
+	for row in csvfile:
+		if header_type(row) == 'meeting':
+			break
+		else:
+			skips += 1
+
+		if skips > 10:
+			break
+
+	csvfile.seek(0)
+	if skips <= 10:
+		for i in range(skips):
+			next(csvfile)
+
+
+def extract_tables(csv_pathname):
+	tables = []
+	tables.append([])
+	with open(csv_pathname) as csvfile:
+		for row in csvfile:
+			if header_type(row) != 'Unknown':
+				tables.append([row.rstrip(' ,\n')])
+			else:
+				tables[-1].append(row.rstrip(' ,\n'))
+	return tables
+
+
 def process(db_pathname, csv_pathname):
+	logger.info('Starting to process csv ' + csv_pathname)
+	dept = os.path.basename(os.path.dirname(csv_pathname))
+	tables = extract_tables(csv_pathname)
+	discards = 0
+	db_rows = []
+	for index, t in enumerate(tables):
+	#for t in tables:
+		if len(t) > 0 and header_type(t[0]) == 'meeting':
+			try:
+				dialect = csv.Sniffer().sniff(str(t))
+			except csv.Error:
+				logger.error('Aborted csv parse because of unrecognised format: ' + csv_pathname)
+				discards += len(t)
+				continue
+			fieldnames = None
+			reader = csv.DictReader(t, fieldnames, dialect)
+			if reader.fieldnames is None:
+				# TODO problem with bis-ministerial-gifts-april-to-june.csv
+				discards += len(t)
+				continue
+			reader.fieldnames = list(map(lambda s: s.strip().lower(), reader.fieldnames))
+
+			csv_keys = reader.fieldnames.copy()
+			keymap = {}
+
+			# complete generic method taking the csv_keys and the list of candidate lists
+			rep = 'Unknown'
+			keymap['rep'] = find_header_match(csv_keys, table.rep_keys)
+			if keymap['rep'] is None and index > 0 and len(tables[index - 1]) > 0:
+				if len(tables[index - 1][-1].split('"')) > 1:
+					rep = tables[index - 1][-1].split('"')[1]
+				else:
+					rep = tables[index - 1][-1].split(',')[0]
+				if rep is None or rep == '':
+					if len(tables[index - 1][-2].split('"')) > 1:
+						rep = tables[index - 1][-2].split('"')[1]
+					else:
+						rep = tables[index - 1][-2].split(',')[0]
+					if rep is None or rep == '':
+						rep = 'Unknown'
+
+			keymap['date'] = find_header_match(csv_keys, table.date_keys)
+			if keymap['date'] is None:
+				discards += len(t)
+				continue
+
+			keymap['org'] = find_header_match(csv_keys, table.org_keys)
+			if keymap['org'] is None:
+				discards += len(t)
+				continue
+
+			keymap['meet'] = find_header_match(csv_keys, table.meet_keys)
+			if keymap['meet'] is None:
+				discards += len(t)
+				continue
+
+			for row in reader:
+				#if all(map(lambda x: row[x] is None or row[x] == '', keymap.values())):
+				if keymap['rep'] is None or row[keymap['rep']] == '':
+					row[keymap['rep']] = rep
+				else:
+					rep = row[keymap['rep']]
+
+				if (row[keymap['date']] == '' or row[keymap['date']] is None) and (row[keymap['org']] == '' or row[keymap['org']] is None) and (row[keymap['meet']] == '' or row[keymap['meet']] is None):
+					# logger.debug('Discarded partial csv row: ' + str(row))
+					continue
+				elif row[keymap['date']] == '' and row[keymap['meet']] is None and len(db_rows) > 0:
+					db_rows[-1][3] += ', '
+					db_rows[-1][3] += row[keymap['org']]
+				elif (row[keymap['meet']] is None or row[keymap['meet']] == '') and (row[keymap['date']] is not None and len(row[keymap['date']]) > 0) and (row[keymap['org']] is not None and len(row[keymap['org']]) > 0):
+					db_rows.append([row[keymap['rep']], row[keymap['date']], row[keymap['org']], 'Not recorded by reporting department', dept])
+				elif (row[keymap['date']] is None or row[keymap['date']] == '') and (row[keymap['meet']] is not None and len(row[keymap['meet']]) > 0) and (row[keymap['org']] is not None and len(row[keymap['org']]) > 0) and len(db_rows) > 0:
+					db_rows.append([row[keymap['rep']], db_rows[-1][2], row[keymap['org']], row[keymap['meet']], dept])
+				elif row[keymap['date']] is None or row[keymap['rep']] is None or row[keymap['org']] is None:
+					logger.warning('Discarded partial csv row: ' + str(row))
+					discards += 1
+				elif row[keymap['date']] == '' or len(row[keymap['date']]) > 27:
+					logger.warning('Discarded partial csv row: ' + str(row))
+					discards += 1
+				else:
+					db_rows.append([row[keymap['rep']], row[keymap['date']], row[keymap['org']], row[keymap['meet']], dept])
+
+	file_id = wrangler.add_file_to_db(db_pathname, csv_pathname, discards)
+	for row in db_rows:
+		row.append(file_id)
+	return wrangler.insert_table_rows(db_pathname, db_rows)
+
+
+def process2(db_pathname, csv_pathname):
 	logger.info('Starting to process csv ' + csv_pathname)
 	dept = os.path.basename(os.path.dirname(csv_pathname))
 	with open(csv_pathname) as csvfile:
