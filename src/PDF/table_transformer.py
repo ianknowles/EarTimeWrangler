@@ -29,17 +29,27 @@ def new_stitch(tables):
 		for n, table in enumerate(page):
 			# try to join lines that run over table breaks
 			if (n == 0 and
-					    len(table['title']) == 0 and
+					    #len(table['title']) == 0 and
 					    # len(list(filter(lambda s: s == '', table[1][0]))) > 0 and
+						table['cells'][0][0] == '' and
+					    #table['cells'][0][1] == '' and
+					    #table['cells'][0][3] == '' and
 					    len(main_table) > 0):
 				logger.info('Stitching rows:' + str(main_table[-1]) + str(table))
-				if any(map(lambda x: x == '', table['cells'][0])):
+				rep = main_table[-1]['cells'][-1][0]
+				if any(map(lambda x: x == '', table['cells'][0][1:])):
 					for i in range(min(len(main_table[-1]['cells'][-1]), len(table['cells'][0]))):
 						main_table[-1]['cells'][-1][i] += ' '
 						main_table[-1]['cells'][-1][i] += table['cells'][0][i]
-					main_table[-1]['cells'] += table['cells']
+					for row in table['cells'][1:]:
+						main_table[-1]['cells'].append(row)
+						if main_table[-1]['cells'][-1][0] == '':
+							main_table[-1]['cells'][-1][0] = rep
 				else:
-					main_table[-1]['cells'] += table['cells']
+					for row in table['cells'][1:]:
+						main_table[-1]['cells'].append(row)
+						if main_table[-1]['cells'][-1][0] == '':
+							main_table[-1]['cells'][-1][0] = rep
 				logger.info('Stitched result:' + str(main_table[-1]))
 			else:
 				main_table.append(table)
@@ -407,7 +417,7 @@ def process_table(table):
 				table_row.append(string.strip())
 
 		if not title:
-			table_cells.append(table_row)
+			table_cells.append([title_row] + table_row)
 
 	#print(title_row)
 	#for r in first_column:

@@ -262,7 +262,7 @@ def process_pdf(db_pathname, pdf_pathname):
 	db_rows = []
 	for table in meetings:
 		for row in table.rows:
-			db_rows.append([table.title] + row + [dept] + [file_id])
+			db_rows.append(row + [dept] + [file_id])
 			print(db_rows)
 
 	return insert_table_rows(db_pathname, db_rows)
