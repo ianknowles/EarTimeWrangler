@@ -5,7 +5,7 @@ import csv
 if __name__ == '__main__':
 	BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 	output_path = os.path.normpath(os.path.join(BASE_DIR, '..', '..', 'output'))
-	date = '2017-09-20'
+	date = '2017-11-01'
 	db_filename = 'meet_' + date + '.sqlite'
 	db_path = os.path.join(output_path, db_filename)
 
@@ -18,7 +18,7 @@ if __name__ == '__main__':
 	#TODO make sure UTF-8 encoded
 	source_filename = 'source-report' + date + '.csv'
 	source_pathname = os.path.join(output_path, source_filename)
-	with open(source_pathname, 'w', newline='') as csvfile:
+	with open(source_pathname, 'w', newline='', encoding='utf-8') as csvfile:
 		w = csv.writer(csvfile)
 		headers = []
 		for row in c.execute('SELECT * FROM source'):
@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
 	export_filename = 'meetings-export' + date + '.csv'
 	export_pathname = os.path.join(output_path, export_filename)
-	with open(export_pathname, 'w', newline='') as file:
+	with open(export_pathname, 'w', newline='', encoding='utf-8') as file:
 		wr = csv.writer(file)
 		headers = []
 		for row in c.execute('SELECT * FROM meeting'):
