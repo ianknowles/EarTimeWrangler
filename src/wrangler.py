@@ -154,17 +154,21 @@ def add_file_to_db(db_pathname, pathname, discards):
 
 
 files = []
-
+duplicates = []
+unhandled_files = []
+unhandled_types = {}
 
 def process_file(db_pathname, pathname):
 	with open(pathname, 'rb') as file:
 		file_hash = hashlib.sha256(file.read()).hexdigest()
 	if file_hash in files:
 		logger.info('Duplicate file skipped ' + pathname)
+		duplicates.append(pathname)
 		return 0
 	else:
 		files.append(file_hash)
 	filename, file_type = os.path.splitext(os.path.basename(pathname))
+	file_type = file_type.lower()
 	if file_type == '.csv':
 		return CSV.table_transform.process(db_pathname, pathname)
 	elif file_type == '.pdf':
@@ -173,6 +177,11 @@ def process_file(db_pathname, pathname):
 		return process_xlsx(db_pathname, pathname)
 	else:
 		logger.debug('Unhandled filetype ' + file_type)
+		unhandled_files.append(pathname)
+		if file_type in unhandled_types:
+			unhandled_types[file_type] = unhandled_types[file_type] + 1
+		else:
+			unhandled_types[file_type] = 1
 	return 0
 
 
@@ -300,6 +309,10 @@ def data_task():
 
 	total = process_path2(db_pathname, data_path, 0)
 	logger.info(str(total) + ' total meetings committed')
+	logger.info(str(len(duplicates)) + ' duplicate files')
+	logger.info(str(len(unhandled_types)) + ' unhandled file types')
+	logger.info(unhandled_types)
+	logger.info(str(len(unhandled_files)) + ' unhandled files')
 
 
 def main_task():
