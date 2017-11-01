@@ -169,6 +169,10 @@ def process_file(db_pathname, pathname):
 		return CSV.table_transform.process(db_pathname, pathname)
 	elif file_type == '.pdf':
 		return process_pdf(db_pathname, pathname)
+	elif file_type == '.xlsx':
+		return process_xlsx(db_pathname, pathname)
+	else:
+		logger.debug('Unhandled filetype ' + file_type)
 	return 0
 
 
@@ -191,10 +195,8 @@ def process_path2(db_pathname, path, count):
 	for (dirpath, dirnames, filenames) in os.walk(path):
 		for filename in filenames:
 			name, file_type = os.path.splitext(filename)
-			if file_type == '.csv':
-				total_count += CSV.table_transform.process(db_pathname, os.path.join(dirpath, filename))
-			elif file_type == '.pdf':
-				total_count += process_pdf(db_pathname, os.path.join(dirpath, filename))
+			#TODO dont need to join dirpath to filename
+			total_count += process_file(db_pathname, os.path.join(dirpath, filename))
 	return total_count
 
 
@@ -231,6 +233,7 @@ def draw_char_groups(g):
 		if i >= len(colours):
 			i = 0
 
+
 def process_pdf(db_pathname, pdf_pathname):
 	logger.info('Starting to process pdf ' + pdf_pathname)
 
@@ -266,6 +269,11 @@ def process_pdf(db_pathname, pdf_pathname):
 			print(db_rows)
 
 	return insert_table_rows(db_pathname, db_rows)
+
+
+def process_xlsx(db_pathname, xlsx_pathname):
+	logger.info('Starting to process xlsx ' + xlsx_pathname)
+	return 0
 
 
 def ago_task():
