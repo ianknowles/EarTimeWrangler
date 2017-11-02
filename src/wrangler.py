@@ -275,7 +275,7 @@ def process_pdf(db_pathname, pdf_pathname):
 	for table in meetings:
 		for row in table.rows:
 			db_rows.append(row + [dept] + [file_id])
-			print(db_rows)
+			#print(db_rows)
 
 	return insert_table_rows(db_pathname, db_rows)
 
@@ -285,6 +285,8 @@ import table
 
 def process_xlsx(db_pathname, xlsx_pathname):
 	logger.info('Starting to process xlsx ' + xlsx_pathname)
+
+	dept = os.path.basename(os.path.dirname(xlsx_pathname))
 
 	import zipfile
 	from xml.etree.ElementTree import iterparse
@@ -313,8 +315,14 @@ def process_xlsx(db_pathname, xlsx_pathname):
 					row = []
 			t = table.Table('', rows)
 			if t.tabletype == 'meeting':
-				print()
-				break
+				file_id = add_file_to_db(db_pathname, xlsx_pathname, 0)
+				db_rows = []
+				for row in t.rows:
+					#if len(row) == len(t.header) and row[0] != '':
+					if row[0] != '' and len(row) > 2:
+						db_rows.append(row + [dept] + [file_id])
+
+				return insert_table_rows(db_pathname, db_rows)
 			rows = []
 
 	#import pandas
