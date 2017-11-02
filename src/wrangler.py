@@ -280,8 +280,45 @@ def process_pdf(db_pathname, pdf_pathname):
 	return insert_table_rows(db_pathname, db_rows)
 
 
+import table
+
+
 def process_xlsx(db_pathname, xlsx_pathname):
 	logger.info('Starting to process xlsx ' + xlsx_pathname)
+
+	import zipfile
+	from xml.etree.ElementTree import iterparse
+	z = zipfile.ZipFile(xlsx_pathname)
+	print()
+	strings = [el.text for e, el in iterparse(z.open('xl/sharedStrings.xml')) if el.tag.endswith('}t')]
+	rows = []
+	row = [] # {}
+	value = ''
+	for name in z.namelist():
+		if os.path.dirname(name) == 'xl/worksheets':
+			for e, el in iterparse(z.open(name)):
+				if el.tag.endswith('}v'): # <v>84</v>
+					value = el.text
+				if el.tag.endswith('}c'): # <c r="A3" t="s"><v>84</v></c>
+					if el.attrib.get('t') == 's':
+						value = strings[int(value)]
+					letter = el.attrib['r'] # AZ22
+					while letter[-1].isdigit():
+						letter = letter[:-1]
+					#row[letter] = value
+					row.append(value)
+					value = ''
+				if el.tag.endswith('}row'):
+					rows.append(row)
+					row = []
+			t = table.Table('', rows)
+			if t.tabletype == 'meeting':
+				print()
+				break
+			rows = []
+
+	#import pandas
+	#df = pandas.read_excel(xlsx_pathname, "Meetings")
 	return 0
 
 
