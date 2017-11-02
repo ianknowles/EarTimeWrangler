@@ -169,12 +169,14 @@ def process_file(db_pathname, pathname):
 		files.append(file_hash)
 	filename, file_type = os.path.splitext(os.path.basename(pathname))
 	file_type = file_type.lower()
-	if file_type == '.csv':
+	if file_type == '.csv' or file_type == '.xls':
 		return CSV.table_transform.process(db_pathname, pathname)
 	elif file_type == '.pdf':
 		return process_pdf(db_pathname, pathname)
 	elif file_type == '.xlsx':
 		return process_xlsx(db_pathname, pathname)
+	elif file_type == '.ods':
+		return process_ods(db_pathname, pathname)
 	else:
 		logger.debug('Unhandled filetype ' + file_type)
 		unhandled_files.append(pathname)
@@ -330,6 +332,47 @@ def process_xlsx(db_pathname, xlsx_pathname):
 	#df = pandas.read_excel(xlsx_pathname, "Meetings")
 	return 0
 
+
+def process_ods(db_pathname, ods_pathname):
+	import zipfile
+	import xml.etree.ElementTree
+	z = zipfile.ZipFile(ods_pathname)
+
+	dept = os.path.basename(os.path.dirname(ods_pathname))
+	#row = []
+	with z.open('content.xml') as x:
+		tree = xml.etree.ElementTree.parse(x)
+		root = tree.getroot()
+		#TODO these are in the document-content root tag
+		ns = {'office': 'urn:oasis:names:tc:opendocument:xmlns:office:1.0',
+		      'table': 'urn:oasis:names:tc:opendocument:xmlns:table:1.0',
+		      'text': 'urn:oasis:names:tc:opendocument:xmlns:text:1.0'}
+		ods_tables = root.findall("office:body/office:spreadsheet/table:table/[@table:name='Meetings']", ns)
+		for t in ods_tables:
+			extracted_rows = []
+			rows = t.findall("table:table-row", ns)
+			for row in rows:
+				cells = row.findall("table:table-cell", ns)
+				values = []
+				for cell in cells:
+					cell_value = cell.find('text:p', ns)
+					if cell_value is not None:
+						values.append(cell_value.text)
+				extracted_rows.append(values)
+			if len(extracted_rows) > 1:
+				t = table.Table('', extracted_rows)
+				if t.tabletype == 'meeting':
+					file_id = add_file_to_db(db_pathname, ods_pathname, 0)
+					db_rows = []
+					for row in t.rows:
+						#if len(row) == len(t.header) and row[0] != '':
+						if len(row) > 2 and row[0] != '':
+							db_rows.append(row + [dept] + [file_id])
+
+					return insert_table_rows(db_pathname, db_rows)
+
+		#ull_iar_version = config_tree.find("settings/[name='General']/data/option/[name='OGLastSavedByProductVersion']/state").text
+	return 0
 
 def ago_task():
 	db_pathname = 'ago.sqlite'

@@ -15,6 +15,7 @@ def test_task():
 
 	data_path = os.path.join(wrangler.path, 'data')
 
+	total += wrangler.process_ods(db_pathname, os.path.join(data_path, 'ho', '2015q2.ods'))
 	total += wrangler.process_xlsx(db_pathname, os.path.join(data_path, 'ago', '2016-ago-Q1 (january-march) 08-07-2016.xlsx'))
 	total += wrangler.process_pdf(db_pathname, os.path.join(data_path, 'bis', 'bis-ministerial-expenses-january-march-2015.pdf'))
 	#total += wrangler.process_pdf(db_pathname, os.path.join(data_path, 'bis', 'bis-ministerial-expenses-july-september-2014.pdf'))
@@ -35,6 +36,7 @@ def test_task():
 	total += CSV.table_transform.process(db_pathname, os.path.join(data_path, 'clg', 'Senior_Officials_meetings_January_to_March_2016.csv'))
 	total += CSV.table_transform.process(db_pathname, os.path.join(data_path, 'bis', 'bis-ministerial-hospitality-jan-mar-2014.csv'))
 	total += CSV.table_transform.process(db_pathname, os.path.join(data_path, 'dwp', '2012q1.csv'))
+	#TODO badly formatted csv
 	total += CSV.table_transform.process(db_pathname, os.path.join(data_path, 'dcms', '2011q1.csv'))
 	total += CSV.table_transform.process(db_pathname, os.path.join(data_path, 'pmo', '2017-pmo-Q1 (january-march) 30-06-2017.csv'))
 	#TODO bad multi-line formatting
