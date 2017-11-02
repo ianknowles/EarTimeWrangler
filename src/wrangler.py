@@ -313,16 +313,17 @@ def process_xlsx(db_pathname, xlsx_pathname):
 				if el.tag.endswith('}row'):
 					rows.append(row)
 					row = []
-			t = table.Table('', rows)
-			if t.tabletype == 'meeting':
-				file_id = add_file_to_db(db_pathname, xlsx_pathname, 0)
-				db_rows = []
-				for row in t.rows:
-					#if len(row) == len(t.header) and row[0] != '':
-					if row[0] != '' and len(row) > 2:
-						db_rows.append(row + [dept] + [file_id])
+			if len(rows) > 1:
+				t = table.Table('', rows)
+				if t.tabletype == 'meeting':
+					file_id = add_file_to_db(db_pathname, xlsx_pathname, 0)
+					db_rows = []
+					for row in t.rows:
+						#if len(row) == len(t.header) and row[0] != '':
+						if len(row) > 2 and row[0] != '':
+							db_rows.append(row + [dept] + [file_id])
 
-				return insert_table_rows(db_pathname, db_rows)
+					return insert_table_rows(db_pathname, db_rows)
 			rows = []
 
 	#import pandas
