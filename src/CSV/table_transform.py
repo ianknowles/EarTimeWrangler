@@ -107,12 +107,15 @@ def next_header(csvfile):
 def extract_tables(csv_pathname):
 	tables = []
 	tables.append([])
-	with open(csv_pathname) as csvfile:
-		for row in csvfile:
-			if header_type(row) != 'Unknown':
-				tables.append([row.rstrip(' ,\n')])
-			else:
-				tables[-1].append(row.rstrip(' ,\n'))
+	try:
+		with open(csv_pathname, 'r') as csvfile:
+			for row in csvfile:
+				if header_type(row) != 'Unknown':
+					tables.append([row.rstrip(' ,\n')])
+				else:
+					tables[-1].append(row.rstrip(' ,\n'))
+	except UnicodeDecodeError:
+		logger.error("Can't decode csv file")
 	return tables
 
 
