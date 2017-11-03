@@ -368,7 +368,7 @@ def process_table(table):
 
 	if len(columns) == 0:
 		logger.debug("Couldn't find any cols in this table, review")
-		return [{"title": "", "cells": []}]
+		return []
 	first_column = list(filter(lambda x: PDF.rectangles.contains(columns[0], x), rects))
 	first_column = list(filter(lambda x: PDF.rectangles.intersects(x, left_line), first_column))
 	first_column = list(filter(lambda x: x.width < 5, first_column))
@@ -380,7 +380,7 @@ def process_table(table):
 
 	if len(rows) == 0:
 		logger.debug("Couldn't find any rows in this table, review")
-		return [{"title": "", "cells": []}]
+		return []
 
 	#cell0 = list(filter(lambda x: PDF.rectangles.contains(columns[0], x) and PDF.rectangles.contains(rows[0], x), tchars))
 	#cell0 = sorted(cell0, key=lambda r: r.y0)
@@ -432,6 +432,7 @@ def process_table(table):
 		elif not title:
 			table_cells.append([title_row] + table_row)
 
+	tables.append({"title": title_row, "cells": table_cells})
 	#print(title_row)
 	#for r in first_column:
 		#plt.plot(*zip(*r.pts))
