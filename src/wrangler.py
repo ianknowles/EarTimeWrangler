@@ -282,7 +282,7 @@ def process_pdf(db_pathname, pdf_pathname):
 	return insert_table_rows(db_pathname, db_rows)
 
 
-import table
+import eartime_table
 
 
 def process_xlsx(db_pathname, xlsx_pathname):
@@ -316,7 +316,7 @@ def process_xlsx(db_pathname, xlsx_pathname):
 					rows.append(row)
 					row = []
 			if len(rows) > 1:
-				t = table.Table('', rows)
+				t = eartime_table.Table('', rows)
 				if t.tabletype == 'meeting':
 					file_id = add_file_to_db(db_pathname, xlsx_pathname, 0)
 					db_rows = []
@@ -360,7 +360,7 @@ def process_ods(db_pathname, ods_pathname):
 						values.append(cell_value.text)
 				extracted_rows.append(values)
 			if len(extracted_rows) > 1:
-				t = table.Table('', extracted_rows)
+				t = eartime_table.Table('', extracted_rows)
 				if t.tabletype == 'meeting':
 					file_id = add_file_to_db(db_pathname, ods_pathname, 0)
 					db_rows = []

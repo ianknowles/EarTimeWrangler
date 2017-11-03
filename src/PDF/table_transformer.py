@@ -11,7 +11,7 @@ from pdfminer.pdfinterp import PDFTextExtractionNotAllowed
 from pdfminer.pdfparser import PDFParser, PDFDocument
 
 import PDF.rectangles
-import table
+import eartime_table
 
 logger = logging.getLogger('meeting_parser').getChild(__name__)
 
@@ -58,7 +58,7 @@ def new_stitch(tables):
 def table_review2(tables):
 	tabs = []
 	for tab in tables:
-		tabs.append(table.Table(tab['title'], tab['cells']))
+		tabs.append(eartime_table.Table(tab['title'], tab['cells']))
 	return tabs
 
 def table_review(tables):
@@ -334,8 +334,10 @@ def page_to_tables(page_layout):
 		tables.append([group, table_chars])
 	tables.reverse()
 
-	for table
-	return list(filter(lambda x: len(x['cells']) > 0, [process_table(table) for table in tables]))
+	processed_tables = []
+	for table in tables:
+		processed_tables = processed_tables + process_table(table)
+	return list(filter(lambda x: len(x['cells']) > 0, processed_tables))
 
 def process_table(table):
 	#import matplotlib.pyplot as plt
@@ -419,7 +421,7 @@ def process_table(table):
 			else:
 				table_row.append(string.strip())
 
-		t = table.Table('', [table_row])
+		t = eartime_table.Table('', [table_row])
 		if t.tabletype == 'meeting' and header:
 			# new table
 			tables.append({"title": title_row, "cells": table_cells})

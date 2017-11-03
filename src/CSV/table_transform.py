@@ -2,7 +2,7 @@ import csv
 import logging
 import os
 
-import table
+import eartime_table
 import wrangler
 
 logger = logging.getLogger('meeting_parser').getChild(__name__)
@@ -22,7 +22,7 @@ def find_header_match(keys, candidates):
 
 
 def csv_identify(db_pathname, csv_pathname, header, rows):
-	t = table.Table('', [header])
+	t = eartime_table.Table('', [header])
 	discards = 0
 	if t.tabletype == 'Unknown':
 		logger.error('Aborted csv parse because of unrecognised header: ' + str(header))
@@ -32,7 +32,7 @@ def csv_identify(db_pathname, csv_pathname, header, rows):
 
 
 def header_type(header):
-	t = table.Table('', [header.split(',')])
+	t = eartime_table.Table('', [header.split(',')])
 	return t.tabletype
 
 
@@ -147,7 +147,7 @@ def process(db_pathname, csv_pathname):
 
 			# complete generic method taking the csv_keys and the list of candidate lists
 			rep = 'Unknown'
-			keymap['rep'] = find_header_match(csv_keys, table.rep_keys)
+			keymap['rep'] = find_header_match(csv_keys, eartime_table.rep_keys)
 			if keymap['rep'] is None and index > 0 and len(tables[index - 1]) > 0:
 				if len(tables[index - 1][-1].split('"')) > 1:
 					rep = tables[index - 1][-1].split('"')[1]
@@ -161,17 +161,17 @@ def process(db_pathname, csv_pathname):
 					if rep is None or rep == '':
 						rep = 'Unknown'
 
-			keymap['date'] = find_header_match(csv_keys, table.date_keys)
+			keymap['date'] = find_header_match(csv_keys, eartime_table.date_keys)
 			if keymap['date'] is None:
 				discards += len(t)
 				continue
 
-			keymap['org'] = find_header_match(csv_keys, table.org_keys)
+			keymap['org'] = find_header_match(csv_keys, eartime_table.org_keys)
 			if keymap['org'] is None:
 				discards += len(t)
 				continue
 
-			keymap['meet'] = find_header_match(csv_keys, table.meet_keys)
+			keymap['meet'] = find_header_match(csv_keys, eartime_table.meet_keys)
 			if keymap['meet'] is None:
 				discards += len(t)
 				continue
@@ -240,28 +240,28 @@ def process2(db_pathname, csv_pathname):
 		keymap = {}
 
 		# complete generic method taking the csv_keys and the list of candidate lists
-		keymap['rep'] = find_header_match(csv_keys, table.rep_keys)
+		keymap['rep'] = find_header_match(csv_keys, eartime_table.rep_keys)
 		#if keymap['rep'] is None:
 		#	for row in reader:
 		#		discards += 1
 		#	csv_identify(db_pathname, csv_pathname, reader.fieldnames, discards)
 		#	return 0
 
-		keymap['date'] = find_header_match(csv_keys, table.date_keys)
+		keymap['date'] = find_header_match(csv_keys, eartime_table.date_keys)
 		if keymap['date'] is None:
 			for row in reader:
 				discards += 1
 			csv_identify(db_pathname, csv_pathname, reader.fieldnames, discards)
 			return 0
 
-		keymap['org'] = find_header_match(csv_keys, table.org_keys)
+		keymap['org'] = find_header_match(csv_keys, eartime_table.org_keys)
 		if keymap['org'] is None:
 			for row in reader:
 				discards += 1
 			csv_identify(db_pathname, csv_pathname, reader.fieldnames, discards)
 			return 0
 
-		keymap['meet'] = find_header_match(csv_keys, table.meet_keys)
+		keymap['meet'] = find_header_match(csv_keys, eartime_table.meet_keys)
 		if keymap['meet'] is None:
 			for row in reader:
 				discards += 1
