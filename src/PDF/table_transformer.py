@@ -425,9 +425,10 @@ def process_table(table):
 		if t.tabletype == 'meeting' and header:
 			# new table
 			tables.append({"title": title_row, "cells": table_cells})
-			table_cells = []
+			table_cells = [title_row] + table_row
 		elif t.tabletype == 'meeting':
 			header = True
+			table_cells.append([title_row] + table_row)
 		#if header row start new table
 		elif not title:
 			table_cells.append([title_row] + table_row)
