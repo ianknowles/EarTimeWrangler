@@ -334,6 +334,7 @@ def page_to_tables(page_layout):
 		tables.append([group, table_chars])
 	tables.reverse()
 
+	for table
 	return list(filter(lambda x: len(x['cells']) > 0, [process_table(table) for table in tables]))
 
 def process_table(table):
@@ -365,7 +366,7 @@ def process_table(table):
 
 	if len(columns) == 0:
 		logger.debug("Couldn't find any cols in this table, review")
-		return {"title": "", "cells": []}
+		return [{"title": "", "cells": []}]
 	first_column = list(filter(lambda x: PDF.rectangles.contains(columns[0], x), rects))
 	first_column = list(filter(lambda x: PDF.rectangles.intersects(x, left_line), first_column))
 	first_column = list(filter(lambda x: x.width < 5, first_column))
@@ -377,14 +378,16 @@ def process_table(table):
 
 	if len(rows) == 0:
 		logger.debug("Couldn't find any rows in this table, review")
-		return {"title": "", "cells": []}
+		return [{"title": "", "cells": []}]
 
 	#cell0 = list(filter(lambda x: PDF.rectangles.contains(columns[0], x) and PDF.rectangles.contains(rows[0], x), tchars))
 	#cell0 = sorted(cell0, key=lambda r: r.y0)
 	title_row = ""
 
 	#i, j = 0
+	tables = []
 	table_cells = []
+	header = False
 	for row in rows:
 		title = False
 		rowend = False
@@ -416,7 +419,15 @@ def process_table(table):
 			else:
 				table_row.append(string.strip())
 
-		if not title:
+		t = table.Table('', [table_row])
+		if t.tabletype == 'meeting' and header:
+			# new table
+			tables.append({"title": title_row, "cells": table_cells})
+			table_cells = []
+		elif t.tabletype == 'meeting':
+			header = True
+		#if header row start new table
+		elif not title:
 			table_cells.append([title_row] + table_row)
 
 	#print(title_row)
@@ -427,7 +438,7 @@ def process_table(table):
 
 	#plt.show()
 	#print()
-	return {"title": title_row, "cells": table_cells}
+	return tables
 
 
 def compact(groups, remaining_rects):

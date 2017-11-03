@@ -15,6 +15,7 @@ def test_task():
 
 	data_path = os.path.join(wrangler.path, 'data')
 
+	total += wrangler.process_pdf(db_pathname, os.path.join(data_path, 'dcms', '1_Jan_to_31_Mar_2013_Ministerial_Meetings_Hospitality_Overseas_travel.pdf'))
 	total += wrangler.process_ods(db_pathname, os.path.join(data_path, 'ho', '2015q2.ods'))
 	total += wrangler.process_xlsx(db_pathname, os.path.join(data_path, 'ago', '2016-ago-Q1 (january-march) 08-07-2016.xlsx'))
 	total += wrangler.process_pdf(db_pathname, os.path.join(data_path, 'bis', 'bis-ministerial-expenses-january-march-2015.pdf'))
