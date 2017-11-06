@@ -101,7 +101,14 @@ def insert_table_rows(db_pathname, table):
 		# if len(row) == 1:
 		#    print(row)
 		#   break
-		tuplelist.append(tuple(row))
+		nil = False
+		for x in row:
+			if isinstance(x, str) and (x.lower() == 'nil' or x.lower() == 'nil return'):
+				nil = True
+		if not nil:
+			tuplelist.append(tuple(row))
+		else:
+			logger.debug('Discarded nil row' + str(row))
 	#print(tuplelist)
 
 	count = 0
