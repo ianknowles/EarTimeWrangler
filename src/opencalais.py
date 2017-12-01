@@ -60,6 +60,7 @@ class OpenCalais:
 			response = requests.post(calais_url, data=request_data, headers=headers, timeout=80)
 
 			if response.status_code == HTTPStatus.OK:
+				print('OK ' + str(self.daily_requests))
 				return response.text
 			else:
 				s = 'status code: ' + str(response.status_code) + 'Results received: ' + response.text
@@ -69,6 +70,18 @@ class OpenCalais:
 		finally:
 			self.daily_requests = self.daily_requests + 1
 			self.save_request_count()
+
+
+def best_match(results_str):
+	entities = []
+	d = json.loads(results_str)
+	for k in d:
+		item = d[k]
+		if '_typeGroup' in item:
+			if item['_typeGroup'] == 'entities':
+				if item['_type'] == 'Company' or item['_type'] == 'Organization' or item['_type'] == 'Person':
+					entities.append(item)
+	return entities
 
 
 if __name__ == "__main__":
