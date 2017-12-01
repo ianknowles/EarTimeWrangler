@@ -12,6 +12,7 @@ if __name__ == '__main__':
 	conn = sqlite3.connect(db_path)
 	c = conn.cursor()
 	c1 = conn.cursor()
+	c2 = conn.cursor()
 
 	csv_discards = 0
 	csv_meetings = 0
@@ -52,6 +53,34 @@ if __name__ == '__main__':
 			r = list(row)
 			if not headers:
 				headers = list(next(zip(*c.description)))
+				wr.writerow(headers)
+			wr.writerow(r)
+
+	export_filename = 'attendance-export' + date + '.csv'
+	export_pathname = os.path.join(output_path, export_filename)
+	with open(export_pathname, 'w', newline='', encoding='utf-8') as file:
+		wr = csv.writer(file)
+		headers = []
+		for row in c.execute('SELECT * FROM attendances'):
+			r = list(row)
+			if not headers:
+				headers = list(next(zip(*c.description)))
+				wr.writerow(headers)
+			wr.writerow(r)
+
+	export_filename = 'combined-export' + date + '.csv'
+	export_pathname = os.path.join(output_path, export_filename)
+	with open(export_pathname, 'w', newline='', encoding='utf-8') as file:
+		wr = csv.writer(file)
+		headers = []
+		for row in c.execute('SELECT * FROM attendances'):
+			r = list(row)
+			meeting = c1.execute('SELECT * FROM meeting WHERE meetingid=?', [r[5]]).fetchone()
+			source = c2.execute('SELECT * FROM source WHERE sourceid=?', [meeting[6]]).fetchone()
+			r = r + list(meeting)[1:] + list(source)[1:]
+			if not headers:
+				headers = list(next(zip(*c.description)))
+				headers = headers + list(next(zip(*c1.description)))[1:] + list(next(zip(*c2.description)))[1:]
 				wr.writerow(headers)
 			wr.writerow(r)
 
