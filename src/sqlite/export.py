@@ -5,7 +5,7 @@ import csv
 if __name__ == '__main__':
 	BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 	output_path = os.path.normpath(os.path.join(BASE_DIR, '..', '..', 'output'))
-	date = '2017-11-01'
+	date = '2017-11-07'
 	db_filename = 'meet_' + date + '.sqlite'
 	db_path = os.path.join(output_path, db_filename)
 
@@ -13,8 +13,10 @@ if __name__ == '__main__':
 	c = conn.cursor()
 	c1 = conn.cursor()
 
-	discards = 0
-	meetings = 0
+	csv_discards = 0
+	csv_meetings = 0
+	pdf_discards = 0
+	pdf_meetings = 0
 	#TODO make sure UTF-8 encoded
 	source_filename = 'source-report' + date + '.csv'
 	source_pathname = os.path.join(output_path, source_filename)
@@ -28,10 +30,18 @@ if __name__ == '__main__':
 				headers.append('meetingcount')
 				w.writerow(headers)
 			r.append(c1.execute('SELECT COUNT(meetingsource) FROM meeting WHERE meetingsource=?', [row[0]]).fetchone()[0])
-			discards += r[-2]
-			meetings += r[-1]
+			if r[3] == 'csv':
+				csv_discards += r[-2]
+				csv_meetings += r[-1]
+			elif r[3] == 'pdf':
+				pdf_discards += r[-2]
+				pdf_meetings += r[-1]
 			w.writerow(r)
-	print("total discard:" + str(discards) + ", total meet:" + str(meetings) + ", rough estimate:" + str(meetings/(meetings + discards) * 100) + "%")
+	#print("csv discard:" + str(csv_discards) + ", csv meet:" + str(csv_meetings) + ", rough estimate:" + str(csv_meetings/(csv_meetings + csv_discards) * 100) + "%")
+	#print("total discard:" + str(pdf_discards) + ", total meet:" + str(pdf_meetings) + ", rough estimate:" + str(pdf_meetings/(pdf_meetings + pdf_discards) * 100) + "%")
+	discards = csv_discards + pdf_discards
+	meetings = csv_meetings + pdf_meetings
+	#print("total discard:" + str(discards) + ", total meet:" + str(meetings) + ", rough estimate:" + str(meetings/(meetings + discards) * 100) + "%")
 
 	export_filename = 'meetings-export' + date + '.csv'
 	export_pathname = os.path.join(output_path, export_filename)
