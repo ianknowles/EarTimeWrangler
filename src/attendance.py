@@ -44,6 +44,7 @@ if __name__ == '__main__':
 		try:
 			while not result and retries < 3:
 				result = open_calais_connection.post_data(r[3])
+				retries = retries + 1
 		except ValueError:
 			print('Unrecoverable error')
 			conn.commit()
