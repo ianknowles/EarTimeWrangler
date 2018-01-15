@@ -52,7 +52,7 @@ class OpenCalais:
 				usage = {'day': datetime.date.today().isoformat(), 'requests': self.daily_requests}
 				json.dump(usage, file)
 				print('Saved daily uses to file. Current daily uses: {uses}'.format(uses=self.daily_requests))
-		except EnvironmentError as e:
+		except EnvironmentError:
 			print('Error saving usage file. Current daily uses: {uses}'.format(uses=self.daily_requests))
 
 	def post_data(self, request_data):
@@ -89,6 +89,8 @@ class OpenCalais:
 			elif response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
 				if 'You exceeded the concurrent request limit for your license key. Please try again later or contact support to upgrade your license.' in response.text:
 					print('Too many requests, must wait at least 750 ms between requests.')
+					# Add another 250 ms to the wait time
+					self.min_wait = self.min_wait + 0.250
 				else:
 					self.daily_requests = self.max_daily_requests
 					raise ValueError('Usage limit reached')
