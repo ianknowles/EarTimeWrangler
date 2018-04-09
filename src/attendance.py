@@ -1,7 +1,8 @@
 import os
 import sqlite3
 import opencalais
-import time
+import sys
+import requests
 
 
 def create_attendance_table(db_pathname):
@@ -38,16 +39,22 @@ if __name__ == '__main__':
 		r = list(row)
 
 		result = None
-		fails = 0
+		retries = 0
 		matches = []
-		while not result and fails < 5:
-			try:
+		try:
+			while not result and retries < 3:
 				result = open_calais_connection.post_data(r[3])
-			except Exception as e:
-				fails = fails + 1
-				print(e)
-			finally:
-				time.sleep(1)
+				retries = retries + 1
+		except ValueError:
+			print('Unrecoverable error')
+			conn.commit()
+			conn.close()
+			sys.exit()
+		except requests.exceptions.RequestException:
+			print('Connection error try again later')
+			conn.commit()
+			conn.close()
+			sys.exit()
 		if result:
 			matches = opencalais.best_match(result)
 		for match in matches:
