@@ -11,6 +11,7 @@ import tkinter.font
 
 import CSV.table_transform
 import PDF.table_transformer
+import sqlite.export
 
 root_logger = logging.getLogger('meeting_parser')
 logger = logging.getLogger('meeting_parser').getChild(__name__)
