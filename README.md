@@ -25,4 +25,4 @@ This license does not apply to any input or output data processed.
 
 ### Acknowledgments
 
-The project was initially funded by an ESRC Impact Acceleration Account Knowledge Exchange Kick-Start grant and contained contributions from researchers funded at one stage or another by Transparency International, the British Academy, ERC and the Wellcome Trust.
+The project was funded by an ESRC IAA Kick-Start (1609-KICK-244) grant.
