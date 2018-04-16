@@ -396,7 +396,8 @@ def ago_task():
 def data_task():
 	date = datetime.date.today().isoformat()
 	db_filename = 'meet_' + date + '.sqlite'
-	db_pathname = os.path.join(path, 'output', db_filename)
+	output_path = os.path.join(path, 'output')
+	db_pathname = os.path.join(output_path, db_filename)
 
 	create_meeting_table(db_pathname)
 	create_source_table(db_pathname)
@@ -409,6 +410,12 @@ def data_task():
 	logger.info(str(len(unhandled_types)) + ' unhandled file types')
 	logger.info(unhandled_types)
 	logger.info(str(len(unhandled_files)) + ' unhandled files')
+
+	source_filename = 'source-report_' + date
+	sqlite.export.export_sources_csv(source_filename, output_path, db_pathname)
+
+	export_filename = 'meetings-export_' + date
+	sqlite.export.export_table_csv(export_filename, output_path, db_pathname, 'meeting')
 
 
 def main_task():
