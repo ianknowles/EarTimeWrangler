@@ -10,7 +10,7 @@ As a pre-requisite to running [wrangler.py](https://github.com/crahal/EarTimeWra
 
 ### Running the Code
 
-Download a [zip](https://github.com/ianknowles/EarTimeWrangler/archive/master.zip) of this repository or `git clone https://github.com/ianknowles/EarTimeWrangler` this repository and run `python wrangler.py` from the `src` folder at the command line.
+Download a [zip](https://github.com/ianknowles/EarTimeWrangler/archive/master.zip) of this repository or `git clone https://github.com/ianknowles/EarTimeWrangler` this repository and run `python wrangler.py` from the `src` folder at the command line. For a step-by-step setup guide aimed at beginners see [beginners.md](beginners.md).
 
 ### Input/output file folders
 
