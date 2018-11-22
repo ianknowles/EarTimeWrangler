@@ -2,7 +2,7 @@
 
 [![Generic badge](https://img.shields.io/badge/Python-3.6-<red>.svg)](https://www.python.org/downloads/release/python-360/)  [![Generic badge](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) 
 
-Tabular Document Wrangler. The code parses data from several types of poorly formatted tabular data formats, including pdf and csv files – on ministerial meetings between ministers and lobbyists. It forms a central part of **'Ear-time with the Cabinet: Ministerial meetings as vehicles for lobbying'**, which is a joint collaboration between the University of Oxford and Transparency International UK.
+Tabular Document Wrangler. The code parses data from several types of poorly formatted tabular data formats, including pdf and csv files – on ministerial meetings between ministers and lobbyists. It forms a central part of **'Ear-time with the Cabinet: Ministerial meetings as vehicles for lobbying'**, which is a joint collaboration between the department of Sociology, University of Oxford and Transparency International UK.
 
 ### Prerequisites
 As a pre-requisite to running [wrangler.py](https://github.com/crahal/EarTimeWrangler/blob/master/src/wrangler.py), you might consider setting up a [virtual environment](https://docs.python.org/3/tutorial/venv.html) with an installation of `pdfminer3k`. An install of Python 3.6 or greater is required.
